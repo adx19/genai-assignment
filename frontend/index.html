@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ScalerChat — Talk to Scaler's Founders & Instructors</title>
+<meta name="description" content="Persona-based AI chatbot. Chat with Anshuman Singh, Abhimanyu Saxena, and Kshitij Mishra from Scaler." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    background: #0D0D14;
+    color: #E8E8F0;
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .syne { font-family: 'Syne', sans-serif; }
+
+  .app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+
+  /* HEADER */
+  .header {
+    height: 56px; flex-shrink: 0;
+    background: #13131F;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-text { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px; color: #E8E8F0; letter-spacing: -0.02em; }
+  .beta-pill {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+    background: rgba(124,111,255,0.18); color: #7C6FFF;
+    padding: 3px 8px; border-radius: 999px;
+  }
+  .talking-to { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #7A7A95; }
+  .pulse-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #4ADE80;
+    box-shadow: 0 0 0 0 rgba(74,222,128,0.7);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(74,222,128,0.6); }
+    70% { box-shadow: 0 0 0 8px rgba(74,222,128,0); }
+    100% { box-shadow: 0 0 0 0 rgba(74,222,128,0); }
+  }
+  .active-name { font-family: 'Syne', sans-serif; font-weight: 700; color: #E8E8F0; }
+
+  /* PERSONA SWITCHER */
+  .switcher {
+    height: 72px; flex-shrink: 0;
+    background: #13131F;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 24px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .switcher::-webkit-scrollbar { display: none; }
+  .persona-btn {
+    display: flex; align-items: center; gap: 12px;
+    background: #1A1A2E;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 999px;
+    padding: 8px 16px 8px 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    font-family: inherit;
+    color: inherit;
+  }
+  .persona-btn:hover { background: #252532; border-color: rgba(255,255,255,0.15); }
+  .persona-btn.active {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, #1A1A2E);
+    box-shadow: 0 0 0 1px var(--accent), 0 0 24px -8px var(--accent);
+  }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+    color: var(--accent);
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .persona-meta { display: flex; flex-direction: column; gap: 2px; text-align: left; }
+  .persona-name { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 13px; color: #E8E8F0; line-height: 1.1; }
+  .persona-role { font-size: 11px; color: #7A7A95; line-height: 1.1; }
+
+  /* CHAT AREA */
+  .chat {
+    flex: 1; overflow-y: auto;
+    padding: 20px;
+    background: #0D0D14;
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .chat::-webkit-scrollbar { width: 8px; }
+  .chat::-webkit-scrollbar-track { background: transparent; }
+  .chat::-webkit-scrollbar-thumb { background: #252532; border-radius: 4px; }
+
+  /* WELCOME CARD */
+  .welcome {
+    background: #1A1A2E; border-radius: 16px; padding: 24px;
+    max-width: 560px; margin: 24px auto; width: 100%;
+    border: 1px solid rgba(255,255,255,0.07);
+    text-align: center;
+    animation: fadeUp 0.4s ease;
+  }
+  .welcome-avatar {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+    color: var(--accent);
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 22px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+  .welcome-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 20px; color: #E8E8F0; margin-bottom: 8px; }
+  .welcome-bio { font-size: 13px; color: #7A7A95; line-height: 1.5; margin-bottom: 20px; }
+  .try-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: #45455A; margin-bottom: 12px; font-weight: 600; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .chip {
+    background: #252532; color: #E8E8F0;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 13px; font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .chip:hover {
+    background: color-mix(in srgb, var(--accent) 14%, #252532);
+    border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+    color: var(--accent);
+  }
+
+  /* MESSAGES */
+  .msg-row { display: flex; gap: 10px; max-width: 100%; animation: fadeUp 0.3s ease; }
+  .msg-row.user { justify-content: flex-end; }
+  .msg-row.bot { justify-content: flex-start; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+    color: var(--accent);
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 12px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .msg-content { display: flex; flex-direction: column; gap: 4px; max-width: 72%; }
+  .msg-row.user .msg-content { align-items: flex-end; }
+  .bubble {
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 14px; line-height: 1.5;
+    word-wrap: break-word; white-space: pre-wrap;
+  }
+  .bubble.user {
+    background: #7C6FFF; color: #fff;
+    border-bottom-right-radius: 3px;
+  }
+  .bubble.bot {
+    background: #1A1A2E; color: #E8E8F0;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-bottom-left-radius: 3px;
+  }
+  .bubble.error {
+    background: #1A1A2E; color: #E8E8F0;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-left: 3px solid #F97316;
+    border-bottom-left-radius: 3px;
+  }
+  .timestamp { font-size: 11px; color: #45455A; padding: 0 4px; }
+
+  /* TYPING */
+  .typing-dots { display: flex; gap: 4px; align-items: center; padding: 4px 0; }
+  .typing-dots span {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #7A7A95;
+    animation: typingPulse 1.2s ease-in-out infinite;
+  }
+  .typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes typingPulse {
+    0%, 60%, 100% { opacity: 0.3; transform: scale(0.85); }
+    30% { opacity: 1; transform: scale(1); }
+  }
+
+  /* INPUT */
+  .input-bar {
+    flex-shrink: 0;
+    background: #13131F;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    padding: 16px 24px 12px;
+  }
+  .input-wrap {
+    background: #1A1A2E;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    display: flex; align-items: flex-end; gap: 8px;
+    padding: 8px;
+    transition: all 0.15s ease;
+    max-width: 900px; margin: 0 auto;
+  }
+  .input-wrap.focused {
+    border-color: #7C6FFF;
+    box-shadow: 0 0 0 3px rgba(124,111,255,0.25);
+  }
+  textarea {
+    flex: 1;
+    background: transparent;
+    border: none; outline: none; resize: none;
+    color: #E8E8F0;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; line-height: 1.5;
+    padding: 7px 8px;
+    max-height: 120px;
+    min-height: 20px;
+  }
+  textarea::placeholder { color: #45455A; }
+  .send-btn {
+    width: 34px; height: 34px;
+    border-radius: 6px;
+    background: #7C6FFF;
+    border: none;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    flex-shrink: 0;
+    color: #fff;
+  }
+  .send-btn:hover:not(:disabled) { background: #8F84FF; }
+  .send-btn:disabled { background: #252532; cursor: not-allowed; color: #45455A; }
+  .hint {
+    text-align: center;
+    font-size: 11px;
+    color: #45455A;
+    margin-top: 8px;
+    max-width: 900px; margin-left: auto; margin-right: auto;
+  }
+
+  /* MOBILE */
+  @media (max-width: 600px) {
+    .header { padding: 0 16px; }
+    .talking-to { font-size: 12px; gap: 6px; }
+    .switcher { padding: 0 16px; gap: 8px; }
+    .persona-btn { padding: 6px; }
+    .persona-meta { display: none; }
+    .chat { padding: 12px; }
+    .msg-content { max-width: 88%; }
+    .input-bar { padding: 12px 12px 8px; }
+    .welcome { padding: 20px; margin: 12px auto; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="logo">
+      <span class="logo-text">ScalerChat</span>
+      <span class="beta-pill">BETA</span>
+    </div>
+    <div class="talking-to">
+      <span>Talking to</span>
+      <span class="pulse-dot"></span>
+      <span class="active-name" id="activeName">Anshuman Singh</span>
+    </div>
+  </header>
+
+  <nav class="switcher" id="switcher"></nav>
+
+  <main class="chat" id="chat"></main>
+
+  <div class="input-bar">
+    <div class="input-wrap" id="inputWrap">
+      <textarea id="input" rows="1" placeholder="Ask anything..."></textarea>
+      <button class="send-btn" id="sendBtn" aria-label="Send">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+      </button>
+    </div>
+    <div class="hint">Press Enter to send · Shift+Enter for new line</div>
+  </div>
+</div>
+
+<script>
+const PERSONAS = {
+  anshuman: {
+    id: 'anshuman',
+    name: 'Anshuman Singh',
+    role: 'Co-founder, SST',
+    initials: 'AS',
+    accent: '#7C6FFF',
+    bio: "Co-founder of Scaler & InterviewBit. Ex-Google engineer who left to fix tech education in India. Believes talent is the only real constraint.",
+    chips: [
+      "🚀 What makes SST different from IITs?",
+      "🎯 How selective is Scaler School of Technology?",
+      "💡 What kind of students get in?",
+      "📈 What's your vision for SST in 10 years?"
+    ]
+  },
+  abhimanyu: {
+    id: 'abhimanyu',
+    name: 'Abhimanyu Saxena',
+    role: 'Co-founder, Scaler',
+    initials: 'AS',
+    accent: '#F97316',
+    bio: "Co-founder of Scaler & InterviewBit. IIT Hyderabad. Built platforms that turned graduates into employable engineers. Obsessed with outcomes.",
+    chips: [
+      "🗺️ How did you go from IIT to building Scaler?",
+      "🔄 Why did you pivot from InterviewBit to Scaler?",
+      "🏗️ What does it take to build a great startup?",
+      "🎓 Why build an offline campus after going online?"
+    ]
+  },
+  kshitij: {
+    id: 'kshitij',
+    name: 'Kshitij Mishra',
+    role: 'Instructor, Scaler Academy',
+    initials: 'KM',
+    accent: '#10B981',
+    bio: "Senior Instructor at Scaler. Makes DSA and OOP feel obvious. Known for high-energy, no-nonsense breakdowns of hard concepts.",
+    chips: [
+      "📊 How do I start learning DSA from scratch?",
+      "🧩 Explain OOP vs procedural programming",
+      "⚡ How is OOP better for large applications?",
+      "🛠️ How do classes and objects actually work in memory?"
+    ]
+  }
+};
+
+let activePersona = 'anshuman';
+let messages = []; // {role, content, time}
+let isTyping = false;
+
+const switcherEl = document.getElementById('switcher');
+const chatEl = document.getElementById('chat');
+const activeNameEl = document.getElementById('activeName');
+const inputEl = document.getElementById('input');
+const inputWrap = document.getElementById('inputWrap');
+const sendBtn = document.getElementById('sendBtn');
+
+function renderSwitcher() {
+  switcherEl.innerHTML = '';
+  Object.values(PERSONAS).forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'persona-btn' + (p.id === activePersona ? ' active' : '');
+    btn.style.setProperty('--accent', p.accent);
+    btn.innerHTML = `
+      <div class="avatar" style="--accent:${p.accent}">${p.initials}</div>
+      <div class="persona-meta">
+        <div class="persona-name">${p.name}</div>
+        <div class="persona-role">${p.role}</div>
+      </div>
+    `;
+    btn.onclick = () => switchPersona(p.id);
+    switcherEl.appendChild(btn);
+  });
+}
+
+function switchPersona(id) {
+  if (id === activePersona) return;
+  activePersona = id;
+  messages = [];
+  activeNameEl.textContent = PERSONAS[id].name;
+  renderSwitcher();
+  renderChat();
+}
+
+function formatTime(d = new Date()) {
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function renderChat() {
+  const p = PERSONAS[activePersona];
+  chatEl.innerHTML = '';
+
+  if (messages.length === 0) {
+    const w = document.createElement('div');
+    w.className = 'welcome';
+    w.style.setProperty('--accent', p.accent);
+    w.innerHTML = `
+      <div class="welcome-avatar" style="--accent:${p.accent}">${p.initials}</div>
+      <div class="welcome-name">${p.name}</div>
+      <div class="welcome-bio">${p.bio}</div>
+      <div class="try-label">Try asking</div>
+      <div class="chips"></div>
+    `;
+    const chipsWrap = w.querySelector('.chips');
+    p.chips.forEach(c => {
+      const chip = document.createElement('button');
+      chip.className = 'chip';
+      chip.style.setProperty('--accent', p.accent);
+      chip.textContent = c;
+      chip.onclick = () => {
+        const stripped = c.replace(/^\p{Emoji}+\s*/u, '').trim();
+        sendMessage(stripped);
+      };
+      chipsWrap.appendChild(chip);
+    });
+    chatEl.appendChild(w);
+  }
+
+  messages.forEach(m => chatEl.appendChild(buildMessageRow(m)));
+
+  if (isTyping) chatEl.appendChild(buildTypingRow());
+
+  requestAnimationFrame(() => { chatEl.scrollTo({ top: chatEl.scrollHeight, behavior: 'smooth' }); });
+}
+
+function buildMessageRow(m) {
+  const p = PERSONAS[activePersona];
+  const row = document.createElement('div');
+  row.className = 'msg-row ' + m.role;
+  row.style.setProperty('--accent', p.accent);
+
+  if (m.role === 'bot' || m.role === 'error') {
+    const av = document.createElement('div');
+    av.className = 'msg-avatar';
+    av.style.setProperty('--accent', p.accent);
+    av.textContent = p.initials;
+    row.appendChild(av);
+  }
+
+  const content = document.createElement('div');
+  content.className = 'msg-content';
+  const bubble = document.createElement('div');
+  if (m.role === 'user') bubble.className = 'bubble user';
+  else if (m.role === 'error') bubble.className = 'bubble error';
+  else bubble.className = 'bubble bot';
+  bubble.textContent = m.content;
+  const ts = document.createElement('div');
+  ts.className = 'timestamp';
+  ts.textContent = m.time;
+  content.appendChild(bubble);
+  content.appendChild(ts);
+  row.appendChild(content);
+
+  // For error rows, render like bot row
+  if (m.role === 'error') row.classList.remove('error'), row.classList.add('bot');
+  return row;
+}
+
+function buildTypingRow() {
+  const p = PERSONAS[activePersona];
+  const row = document.createElement('div');
+  row.className = 'msg-row bot';
+  row.style.setProperty('--accent', p.accent);
+  const av = document.createElement('div');
+  av.className = 'msg-avatar';
+  av.style.setProperty('--accent', p.accent);
+  av.textContent = p.initials;
+  const content = document.createElement('div');
+  content.className = 'msg-content';
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble bot';
+  bubble.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
+  content.appendChild(bubble);
+  row.appendChild(av);
+  row.appendChild(content);
+  return row;
+}
+
+async function sendMessage(text) {
+  const trimmed = text.trim();
+  if (!trimmed || isTyping) return;
+  messages.push({ role: 'user', content: trimmed, time: formatTime() });
+  isTyping = true;
+  renderChat();
+  updateSendBtn();
+
+  const apiMessages = messages
+    .filter(m => m.role === 'user' || m.role === 'bot')
+    .map(m => ({ role: m.role === 'bot' ? 'assistant' : 'user', content: m.content }));
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ persona: activePersona, messages: apiMessages })
+    });
+    if (!res.ok) throw new Error('Bad response');
+    const data = await res.json();
+    isTyping = false;
+    messages.push({ role: 'bot', content: data.reply || '...', time: formatTime() });
+  } catch (e) {
+    isTyping = false;
+    messages.push({ role: 'error', content: 'Something went wrong. Please try again.', time: formatTime() });
+  }
+  renderChat();
+  updateSendBtn();
+}
+
+function updateSendBtn() {
+  sendBtn.disabled = !inputEl.value.trim() || isTyping;
+}
+
+function autoResize() {
+  inputEl.style.height = 'auto';
+  inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + 'px';
+}
+
+inputEl.addEventListener('input', () => { autoResize(); updateSendBtn(); });
+inputEl.addEventListener('focus', () => inputWrap.classList.add('focused'));
+inputEl.addEventListener('blur', () => inputWrap.classList.remove('focused'));
+inputEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    const v = inputEl.value;
+    inputEl.value = '';
+    autoResize();
+    updateSendBtn();
+    sendMessage(v);
+  }
+});
+sendBtn.addEventListener('click', () => {
+  const v = inputEl.value;
+  inputEl.value = '';
+  autoResize();
+  updateSendBtn();
+  sendMessage(v);
+});
+
+renderSwitcher();
+renderChat();
+updateSendBtn();
+</script>
+</body>
+</html>
