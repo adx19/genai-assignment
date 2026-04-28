@@ -484,7 +484,7 @@ async function sendMessage(text) {
     .map(m => ({ role: m.role === 'bot' ? 'assistant' : 'user', content: m.content }));
 
   try {
-    const res = await fetch('/api/chat', {
+    const res = await fetch('http://localhost:4712/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ persona: activePersona, messages: apiMessages })

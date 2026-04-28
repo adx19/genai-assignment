@@ -1,8 +1,8 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import prompts from "./prompt.js";
+import { GoogleGenAI } from "@google/genai";
+import prompts from "./prompt.js"; 
 
 dotenv.config();
 
@@ -12,10 +12,8 @@ const PORT = 4712;
 app.use(cors());
 app.use(express.json());
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-const model = genAI.getGenerativeModel({
-  model: "gemini-1.5-flash",
+const genAI = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
 });
 
 app.post("/api/chat", async (req, res) => {
@@ -23,7 +21,7 @@ app.post("/api/chat", async (req, res) => {
     const { persona, messages } = req.body;
 
     if (!persona || !messages) {
-      return res.status(400).json({ error: "Missing persona or message" });
+      return res.status(400).json({ error: "Missing persona or messages" });
     }
 
     const systemPrompt = prompts[persona];
@@ -31,22 +29,17 @@ app.post("/api/chat", async (req, res) => {
       return res.status(400).json({ error: "Invalid persona" });
     }
 
-    const chat = model.startChat({
-      history: messages.map((m) => ({
-        role: m.role === "assistant" ? "model" : "user",
-        parts: [{ text: m.content }],
-      })),
-    });
-
     const lastUserMessage = messages[messages.length - 1]?.content || "";
 
-    const result = await chat.sendMessage(
-      `${systemPrompt}\n\nUser: ${lastUserMessage}`,
-    );
+    const response = await genAI.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: `${systemPrompt}\n\nUser: ${lastUserMessage}`,
+    });
 
-    const reply = result.response.text();
+    const reply = response.text;
 
     res.json({ reply });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Something went wrong" });
