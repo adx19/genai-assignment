@@ -32,7 +32,7 @@ app.post("/api/chat", async (req, res) => {
     const lastUserMessage = messages[messages.length - 1]?.content || "";
 
     const response = await genAI.models.generateContent({
-      model: "gemini-2.0-flash",
+      model: "gemini-3-flash-preview",
       contents: `${systemPrompt}\n\nUser: ${lastUserMessage}`,
     });
 
