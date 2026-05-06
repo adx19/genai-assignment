@@ -1,0 +1,172 @@
+/* Global Styles */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #2C3E50;
+  background-color: #F5F7FA;
+}
+
+a {
+  text-decoration: none;
+  color: #4CAF50;
+}
+
+a:hover {
+  color: #3e8e41;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* Navigation Bar Styles */
+
+.navbar {
+  position: sticky;
+  top: 0;
+  background-color: #F5F7FA;
+  padding: 1em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.navbar ul {
+  list-style: none;
+  display: flex;
+  gap: 1em;
+}
+
+.navbar li {
+  position: relative;
+}
+
+.navbar a {
+  color: #6C63FF;
+}
+
+.navbar a:hover {
+  color: #5b55fe;
+}
+
+.navbar .active {
+  color: #4CAF50;
+}
+
+/* Hero Section Styles */
+
+.hero {
+  height: 100vh;
+  background-image: linear-gradient(90deg, #6C63FF, #4CAF50);
+  background-size: 100% 300px;
+  background-position: 0% 100%;
+  transition: background-position 1s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+}
+
+.hero h1 {
+  font-size: 3em;
+  font-weight: bold;
+}
+
+.hero .button {
+  padding: 1em 2em;
+  border: none;
+  border-radius: 0.5em;
+  background-color: #4CAF50;
+  color: #fff;
+}
+
+.hero .button:hover {
+  background-color: #3e8e41;
+  transition: background-color 0.5s ease;
+}
+
+/* Footer Styles */
+
+.footer {
+  background-color: #2C3E50;
+  color: #fff;
+  padding: 1em;
+  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1em;
+}
+
+.footer ul {
+  list-style: none;
+  display: flex;
+  gap: 1em;
+  align-items: center;
+}
+
+.footer li {
+  position: relative;
+}
+
+.footer a {
+  color: #fff;
+}
+
+.footer a:hover {
+  color: #4CAF50;
+}
+
+/* Button Styles */
+
+.button {
+  padding: 0.5em 1em;
+  border: none;
+  border-radius: 0.5em;
+  background-color: #4CAF50;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.5s ease;
+}
+
+.button:hover {
+  background-color: #3e8e41;
+}
+
+/* Responsive Design */
+
+@media (min-width: 768px) {
+  .navbar ul {
+    gap: 2em;
+  }
+  .hero {
+    height: 90vh;
+  }
+  .footer ul {
+    gap: 2em;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero {
+    height: 80vh;
+  }
+  .footer {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero {
+    height: 60vh;
+  }
+}
