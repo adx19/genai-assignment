@@ -1,172 +1,386 @@
-#!/usr/bin/env node
-/**
- * Scaler-Clone Agent CLI
- * ----------------------
- * A conversational terminal agent (Cursor/Windsurf style) that uses
- * Google Gemini with tool-calling to iteratively generate a Scaler
- * Academy look-alike webpage (HTML + CSS + JS).
- *
- * Usage:
- *   1. npm i @google/generative-ai dotenv
- *   2. echo "GEMINI_API_KEY=your_key_here" > .env
- *   3. node cli/agent.mjs
- *
- * Then just chat. Try:
- *   > clone the scaler academy website into ./output
- */
+import dotenv from "dotenv";
+dotenv.config();
 
-import "dotenv/config";
-import readline from "node:readline";
-import fs from "node:fs/promises";
-import path from "node:path";
+import readline from "readline";
+import fs from "fs";
+import path from "path";
+import axios from "axios";
+import * as cheerio from "cheerio";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const API_KEY = process.env.GEMINI_API_KEY;
-if (!API_KEY) {
-  console.error("❌ Missing GEMINI_API_KEY. Add it to a .env file at the repo root.");
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
+
+const apiKey = process.env.GEMINI_API_KEY;
+
+if (!apiKey) {
+  console.log("❌ GEMINI_API_KEY not found.");
   process.exit(1);
 }
 
-const MODEL = "gemini-3-flash-preview";
-const ROOT = process.cwd();
+const genAI = new GoogleGenerativeAI(apiKey);
 
-// ---------- Tool implementations ----------
-const safeResolve = (p) => {
-  const abs = path.resolve(ROOT, p);
-  if (!abs.startsWith(ROOT)) throw new Error("Path escapes project root");
-  return abs;
-};
+const model = genAI.getGenerativeModel({
+  model: "gemini-2.5-flash-lite",
+});
 
-const tools = {
-  write_file: async ({ path: p, content }) => {
-    const abs = safeResolve(p);
-    await fs.mkdir(path.dirname(abs), { recursive: true });
-    await fs.writeFile(abs, content, "utf8");
-    return { ok: true, bytes: content.length, path: p };
-  },
-  read_file: async ({ path: p }) => {
-    const abs = safeResolve(p);
-    const content = await fs.readFile(abs, "utf8");
-    return { ok: true, content };
-  },
-  list_dir: async ({ path: p = "." }) => {
-    const abs = safeResolve(p);
-    const items = await fs.readdir(abs, { withFileTypes: true });
-    return { ok: true, items: items.map((d) => ({ name: d.name, dir: d.isDirectory() })) };
-  },
-  finish: async ({ summary }) => {
-    return { ok: true, summary };
-  },
-};
+const OUTPUT_DIR = path.join(process.cwd(), "output");
 
-// ---------- Tool schema for Gemini ----------
-const toolDeclarations = [
+if (!fs.existsSync(OUTPUT_DIR)) {
+  fs.mkdirSync(OUTPUT_DIR);
+}
+
+const systemPrompt = `
+You are an elite frontend website cloning agent.
+
+Your ONLY task is to recreate websites as accurately as possible.
+
+You are NOT designing a new website.
+You are cloning the provided website.
+
+========================
+YOUR JOB
+========================
+
+You will receive:
+- user instruction
+- scraped website content
+- real headings
+- real images
+- real HTML snippets
+- stylesheet references
+
+You MUST use those details to recreate the website visually.
+
+========================
+STRICT RULES
+========================
+
+1. Generate ONLY:
+- index.html
+- style.css
+- script.js
+
+2. Use ONLY:
+- HTML
+- CSS
+- Vanilla JavaScript
+
+3. Do NOT use:
+- React
+- Tailwind
+- Bootstrap
+- Vue
+- frameworks
+
+4. VISUAL ACCURACY IS MOST IMPORTANT
+
+Match:
+- colors
+- layout
+- spacing
+- typography
+- section structure
+- navbar
+- hero section
+- cards
+- footer
+- buttons
+
+5. Use REAL image URLs from scraped data whenever possible.
+
+6. Do NOT invent random layouts.
+
+7. Do NOT add unnecessary animations.
+
+8. CSS must:
+- be clean
+- responsive
+- non-breaking
+- organized
+
+9. JavaScript should remain minimal.
+
+10. ALWAYS return COMPLETE files.
+
+11. NEVER return placeholders like:
+- "continue here"
+- "remaining code"
+- "same as above"
+
+12. RESPONSE FORMAT IS MANDATORY.
+
+You MUST respond EXACTLY like this:
+
+<THOUGHT>
+Reasoning here
+</THOUGHT>
+
+<HTML>
+ENTIRE HTML FILE HERE
+</HTML>
+
+<CSS>
+ENTIRE CSS FILE HERE
+</CSS>
+
+<JS>
+ENTIRE JS FILE HERE
+</JS>
+
+IMPORTANT:
+- Do NOT wrap anything in markdown
+- Do NOT use triple backticks
+- Do NOT return JSON
+- Do NOT explain anything outside the tags
+- All 4 tags are mandatory
+- HTML must be inside <HTML>
+- CSS must be inside <CSS>
+- JS must be inside <JS>
+
+<THOUGHT>
+your reasoning
+</THOUGHT>
+
+<HTML>
+full html
+</HTML>
+
+<CSS>
+full css
+</CSS>
+
+<JS>
+full javascript
+</JS>
+
+13. Do NOT use markdown code blocks.
+14. Do NOT return JSON.
+`;
+
+let conversationHistory = [
   {
-    name: "write_file",
-    description: "Create or overwrite a UTF-8 text file at a project-relative path. Creates parent directories as needed.",
-    parameters: {
-      type: "object",
-      properties: {
-        path: { type: "string", description: "Project-relative file path, e.g. 'output/index.html'." },
-        content: { type: "string", description: "Full file contents." },
-      },
-      required: ["path", "content"],
-    },
-  },
-  {
-    name: "read_file",
-    description: "Read a UTF-8 text file from the project.",
-    parameters: {
-      type: "object",
-      properties: { path: { type: "string" } },
-      required: ["path"],
-    },
-  },
-  {
-    name: "list_dir",
-    description: "List entries inside a project directory.",
-    parameters: {
-      type: "object",
-      properties: { path: { type: "string" } },
-    },
-  },
-  {
-    name: "finish",
-    description: "Call when the user's task is fully complete. Provide a short summary of what was built and where.",
-    parameters: {
-      type: "object",
-      properties: { summary: { type: "string" } },
-      required: ["summary"],
-    },
+    role: "user",
+    parts: [{ text: systemPrompt }],
   },
 ];
 
-const SYSTEM = `You are "ScalerCloneAgent", a terminal coding agent (like Cursor/Windsurf).
+console.log("🤖 Website Cloner Agent (Gemini)");
+console.log('💡 Try: "Clone https://www.scaler.com"');
+console.log('💡 Type "exit" to quit\n');
 
-Operating rules:
-- You work in iterative steps. NEVER try to do everything in one giant response.
-- When the user asks to clone the Scaler Academy website (https://www.scaler.com), produce a self-contained static site in an "output/" directory:
-    output/index.html, output/styles.css, output/script.js
-- The page MUST contain at minimum: a Header (logo "Scaler", nav links: Academy, Neovarsity, Topics, Books, Login, Book a Free Trial CTA), a Hero Section (bold headline about transforming tech careers, sub-headline, primary CTA, secondary CTA, supporting visual placeholder), and a Footer (columns for Company / Programs / Resources / Social, copyright).
-- Visual style should evoke Scaler: dark navy/near-black background (#0b1c2c-ish), white text, vibrant accent (electric blue/yellow), modern sans-serif (Inter/Poppins via Google Fonts), generous spacing, rounded buttons.
-- Add light JS interactivity (mobile nav toggle, smooth scroll, simple FAQ accordion or testimonial slider — your choice).
-- Do NOT copy any copyrighted text/logos verbatim. Use original copy that captures the same intent.
-- After writing files, briefly tell the user how to open output/index.html and call the finish tool.
+async function scrapeWebsite(url) {
+  try {
+    console.log("🌐 Scraping website...");
 
-Always use the provided tools to actually create files. Do not just print code in chat — write it to disk.`;
+    const response = await axios.get(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+      },
+    });
 
-// ---------- Agent loop ----------
-const genAI = new GoogleGenerativeAI(API_KEY);
-const model = genAI.getGenerativeModel({
-  model: MODEL,
-  systemInstruction: SYSTEM,
-  tools: [{ functionDeclarations: toolDeclarations }],
-});
+    const html = response.data;
 
-const chat = model.startChat({ history: [] });
+    const $ = cheerio.load(html);
 
-async function sendAndDrive(userText) {
-  let result = await chat.sendMessage(userText);
-  let safety = 0;
-  while (safety++ < 25) {
-    const calls = result.response.functionCalls?.() ?? [];
-    if (!calls.length) {
-      const text = result.response.text();
-      if (text) console.log(`\n🤖 ${text}\n`);
+    const title = $("title").text();
+
+    const headings = [];
+
+    $("h1, h2, h3").each((i, el) => {
+      const text = $(el).text().trim();
+
+      if (text) {
+        headings.push(text);
+      }
+    });
+
+    const paragraphs = [];
+
+    $("p").each((i, el) => {
+      const text = $(el).text().trim();
+
+      if (text.length > 40) {
+        paragraphs.push(text);
+      }
+    });
+
+    const images = [];
+
+    $("img").each((i, el) => {
+      const src = $(el).attr("src");
+
+      if (src) {
+        if (src.startsWith("http")) {
+          images.push(src);
+        } else if (src.startsWith("/")) {
+          images.push(url + src);
+        }
+      }
+    });
+
+    const stylesheets = [];
+
+    $('link[rel="stylesheet"]').each((i, el) => {
+      const href = $(el).attr("href");
+
+      if (href) {
+        if (href.startsWith("http")) {
+          stylesheets.push(href);
+        } else if (href.startsWith("/")) {
+          stylesheets.push(url + href);
+        }
+      }
+    });
+
+    const inlineStyles = [];
+
+    $("style").each((i, el) => {
+      inlineStyles.push($(el).html());
+    });
+
+    return {
+      title,
+      headings: headings.slice(0, 30),
+      paragraphs: paragraphs.slice(0, 20),
+      images: images.slice(0, 30),
+      stylesheets,
+    };
+  } catch (error) {
+    console.log("❌ Scraping failed:", error.message);
+    return null;
+  }
+}
+
+function extractTag(content, tag) {
+  const startTag = `<${tag}>`;
+  const endTag = `</${tag}>`;
+
+  const startIndex = content.indexOf(startTag);
+  const endIndex = content.indexOf(endTag);
+
+  if (startIndex === -1 || endIndex === -1) {
+    return "";
+  }
+
+  return content
+    .substring(startIndex + startTag.length, endIndex)
+    .trim();
+}
+function askUser() {
+  rl.question("You: ", async (input) => {
+    if (input.toLowerCase() === "exit") {
+      console.log("\n👋 Exiting...");
+      rl.close();
       return;
     }
-    const responses = [];
-    for (const call of calls) {
-      const fn = tools[call.name];
-      console.log(`🔧 ${call.name}(${Object.keys(call.args || {}).join(", ")})`);
-      let response;
-      try {
-        response = fn ? await fn(call.args || {}) : { ok: false, error: "unknown tool" };
-      } catch (e) {
-        response = { ok: false, error: String(e?.message || e) };
+
+    try {
+      console.log("\n🚀 START: Starting the cloning process...");
+      console.log("🌐 Reading website...");
+      console.log("🎨 Extracting design...");
+      console.log("🧠 Understanding layout...");
+      console.log("🛠️ Generating files...\n");
+
+      let scrapedData = null;
+
+      if (input.includes("http")) {
+        const urlMatch = input.match(/https?:\/\/[^\s]+/);
+
+        if (urlMatch) {
+          scrapedData = await scrapeWebsite(urlMatch[0]);
+        }
       }
-      responses.push({ functionResponse: { name: call.name, response } });
+
+      conversationHistory.push({
+        role: "user",
+        parts: [
+          {
+            text: `
+USER REQUEST:
+${input}
+
+SCRAPED WEBSITE DATA:
+${JSON.stringify(scrapedData, null, 2)}
+
+IMPORTANT:
+Use the scraped data to recreate the website visually.
+
+Do NOT overthink.
+Do NOT explain excessively.
+
+Directly generate:
+- HTML
+- CSS
+- JS
+
+Keep reasoning short.
+`,
+          },
+        ],
+      });
+
+      const result = await model.generateContent({
+        contents: conversationHistory,
+        generationConfig: {
+          temperature: 0.2,
+          topP: 0.8,
+          topK: 20,
+          maxOutputTokens: 16384,
+        },
+      });
+
+      const response = result.response.text();
+
+      const thought = extractTag(response, "THOUGHT");
+      const html = extractTag(response, "HTML");
+      const css = extractTag(response, "CSS");
+      const js = extractTag(response, "JS");
+
+      if (!html || !css) {
+         console.log("\n⚠️ RAW MODEL RESPONSE:\n");
+         console.log(response);
+
+         throw new Error("Failed to extract generated files.");
+      }
+      const htmlPath = path.join(OUTPUT_DIR, "index.html");
+      const cssPath = path.join(OUTPUT_DIR, "style.css");
+      const jsPath = path.join(OUTPUT_DIR, "script.js");
+
+      fs.writeFileSync(htmlPath, html);
+      fs.writeFileSync(cssPath, css);
+      fs.writeFileSync(jsPath, js);
+
+      console.log("✅ Clone generated successfully!\n");
+
+      console.log("📂 Output Folder:");
+      console.log(OUTPUT_DIR);
+
+      console.log("\n🧠 Agent Thought:");
+      console.log(thought);
+
+      console.log("\n📄 Files Generated:");
+      console.log("- index.html");
+      console.log("- style.css");
+      console.log("- script.js");
+
+      console.log("\n🌐 Open output/index.html in browser\n");
+
+      conversationHistory.push({
+        role: "model",
+        parts: [{ text: response }],
+      });
+    } catch (error) {
+      console.log("\n❌ Error:");
+      console.log(error.message);
     }
-    result = await chat.sendMessage(responses);
-  }
-  console.log("⚠️  Stopped: tool-loop safety limit reached.");
+
+    console.log("");
+    askUser();
+  });
 }
 
-// ---------- REPL ----------
-const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-const ask = (q) => new Promise((res) => rl.question(q, res));
-
-console.log("🟢 Scaler-Clone Agent ready. Type your instruction (or 'exit').");
-console.log("   Tip: try  →  clone the scaler academy website into ./output\n");
-
-while (true) {
-  const input = (await ask("you › ")).trim();
-  if (!input) continue;
-  if (["exit", "quit", ":q"].includes(input.toLowerCase())) break;
-  try {
-    await sendAndDrive(input);
-  } catch (e) {
-    console.error("❌", e?.message || e);
-  }
-}
-rl.close();
+askUser();

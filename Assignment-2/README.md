@@ -1,237 +1,211 @@
 # AI Website Cloning Agent 🤖
 
-A conversational CLI agent that clones the Scaler Academy website using AI. Built with Groq LLM and demonstrates multi-step agent reasoning.
+A conversational CLI-based AI agent that clones websites using Gemini AI.
 
-## 🎯 Features
+This project recreates websites like https://www.scaler.com by scraping real website data and generating complete HTML, CSS, and JavaScript files.
 
-- **Conversational Interface**: Natural language commands
-- **Agent Loop**: Multi-step reasoning with THINK → PLAN → ACT → OBSERVE cycle
-- **Website Generation**: Creates complete HTML, CSS, and JavaScript files
-- **Scaler Clone**: Generates a working clone of the Scaler Academy website
-- **Professional Output**: Modern, responsive design with proper structure
+---
 
-## 📋 Requirements
+# 🚀 Features
 
-- Node.js (v16 or higher)
-- Groq API key (free at https://console.groq.com)
+- Conversational CLI interface
+- Gemini AI powered generation
+- Real website scraping using Axios + Cheerio
+- Generates:
+  - `index.html`
+  - `style.css`
+  - `script.js`
+- Responsive website output
+- Multi-step agent workflow
+- Browser-ready generated files
+- Pure HTML/CSS/Vanilla JS
+- No frameworks used
 
-## 🚀 Setup
+---
 
-### 1. Install Dependencies
+# 🛠️ Tech Stack
+
+- Node.js
+- Gemini 2.5 Flash Lite
+- Axios
+- Cheerio
+- Dotenv
+
+---
+
+# 📦 Installation
+
+## 1. Clone the repository
+
+```bash
+git clone <your_repo_url>
+cd <your_repo_name>
+```
+
+## 2. Install dependencies
 
 ```bash
 npm install
 ```
 
-### 2. Configure API Key
-
-Create a `.env` file in the project root:
+Or manually:
 
 ```bash
-cp .env.example .env
+npm install @google/generative-ai dotenv axios cheerio
 ```
-
-Edit `.env` and add your Groq API key:
-
-```
-GROQ_API_KEY=your_actual_api_key_here
-```
-
-Get your free API key from: https://console.groq.com/keys
-
-### 3. Run the Agent
-
-```bash
-npm start
-```
-
-Or directly:
-
-```bash
-node agent.js
-```
-
-## 💬 Usage
-
-The agent understands natural language commands:
-
-### Create a Website
-
-```
-You: create a website
-You: build a scaler clone
-You: clone the scaler website
-```
-
-### Delete a Website
-
-```
-You: delete scaler_clone_1234567890
-```
-
-### Exit
-
-```
-You: exit
-```
-
-## 🔄 How It Works
-
-The agent follows a multi-step reasoning process:
-
-1. **🧠 THINK**: Analyzes user input to understand intent
-2. **📋 PLAN**: Breaks down the task into steps
-3. **⚡ ACT**: Executes each step sequentially:
-   - Create project folder
-   - Generate HTML structure
-   - Generate CSS styling
-   - Generate JavaScript code
-   - Write files to disk
-   - Verify creation
-4. **👀 OBSERVE**: Monitors results after each action
-5. **✅ COMPLETE**: Confirms task completion
-
-## 📂 Output Structure
-
-Generated websites have this structure:
-
-```
-scaler_clone_1234567890/
-├── index.html    # Main HTML structure
-├── style.css     # CSS styling
-└── script.js     # JavaScript interactivity
-```
-
-## 🎨 Generated Website Features
-
-The cloned website includes:
-
-- **Header**: Navigation with logo and menu items
-- **Hero Section**: Eye-catching headline and call-to-action
-- **Footer**: Company information and links
-- **Responsive Design**: Mobile-friendly layout
-- **Modern Styling**: Purple/blue theme matching Scaler's brand
-- **Interactivity**: Smooth scrolling, animations, mobile menu
-
-## 🎥 Demo Video Script
-
-For your YouTube submission:
-
-1. **Show Terminal** (0:00-0:30)
-   - Run `node agent.js`
-   - Show the welcome screen
-   
-2. **Create Command** (0:30-1:30)
-   - Type: "create a scaler website"
-   - Show the agent's reasoning steps
-   - Highlight the THINK → PLAN → ACT → OBSERVE cycle
-   
-3. **Show Output** (1:30-2:00)
-   - Navigate to generated folder
-   - Show the three files created
-   
-4. **Open in Browser** (2:00-2:30)
-   - Open index.html in browser
-   - Show the header, hero section, and footer
-   - Demonstrate responsiveness
-   
-5. **Cleanup** (2:30-3:00)
-   - Type: "delete scaler_clone_..."
-   - Show successful deletion
-
-## 🏆 Assignment Requirements Met
-
-✅ **CLI Tool**: Natural language terminal interface  
-✅ **Agent Reasoning**: Multi-step THINK-PLAN-ACT-OBSERVE loop  
-✅ **Real Output**: Generates actual HTML/CSS/JS files  
-✅ **Scaler Clone**: Includes header, hero section, footer  
-✅ **Agent Loop**: Not single-step - executes in 6 distinct phases  
-✅ **Browser Ready**: Opens and displays correctly  
-
-## 🛠️ Troubleshooting
-
-### "API key not found" error
-
-Make sure your `.env` file exists and contains:
-```
-GROQ_API_KEY=gsk_...
-```
-
-### Generated website looks broken
-
-- Check if all three files were created
-- Ensure the HTML file links to style.css and script.js
-- Try regenerating with a fresh command
-
-### Agent doesn't understand command
-
-Use clear keywords:
-- For creation: "create", "build", "clone", "website"
-- For deletion: "delete", "remove"
-
-## 📝 Code Quality
-
-- **Modular Design**: Separated concerns (tools, generation, agent, CLI)
-- **Error Handling**: Try-catch blocks with user-friendly messages
-- **Documentation**: Clear comments and function descriptions
-- **Agent Pattern**: Proper multi-step reasoning implementation
-- **Professional Output**: Production-quality code generation
-
-## 🔑 Key Implementation Details
-
-### Agent Loop (Not Single-Step)
-
-The agent executes in multiple sequential steps with pauses between them:
-
-```javascript
-// Step 1: Create folder
-await this.delay(800);
-this.log("⚡", "ACT [1/6]", "Creating project folder...");
-
-// Step 2: Generate HTML
-await this.delay(800);
-this.log("⚡", "ACT [2/6]", "Generating HTML structure...");
-```
-
-### LLM Prompts
-
-Specialized prompts for each file type:
-- HTML: Semantic structure, responsive meta tags
-- CSS: Modern styling, flexbox/grid, animations
-- JS: Vanilla JavaScript, event listeners, interactivity
-
-### File Extraction
-
-Robust parsing that handles code blocks and raw content:
-
-```javascript
-function extractCodeFromResponse(response, language) {
-  // Tries code block format first
-  // Falls back to pattern matching
-  // Returns clean, usable code
-}
-```
-
-## 📚 Learning Resources
-
-- [Groq API Docs](https://console.groq.com/docs)
-- [Agent Architecture](https://docs.anthropic.com/claude/docs/agent-patterns)
-- [Scaler Website](https://www.scaler.com)
-
-## 📄 License
-
-MIT License - Feel free to use for your assignment and beyond!
-
-## 🎓 Assignment Submission Checklist
-
-- [ ] Code pushed to public GitHub repository
-- [ ] README.md included (this file)
-- [ ] Video recorded (2-3 minutes)
-- [ ] Video shows live agent execution
-- [ ] Video shows browser output
-- [ ] Video is public or unlisted on YouTube
-- [ ] Both links submitted on course portal
 
 ---
 
-**Made with ❤️ for the GenAI Assignment**
+# 🔑 Setup API Key
+
+Create a `.env` file:
+
+```env
+GEMINI_API_KEY=your_api_key_here
+```
+
+Get your API key from:
+
+https://aistudio.google.com/app/apikey
+
+---
+
+# ▶️ Run the Project
+
+```bash
+node index.js
+```
+
+---
+
+# 💬 Example Usage
+
+```bash
+You: Clone https://www.scaler.com
+```
+
+The agent will:
+
+1. Read the website
+2. Scrape content and assets
+3. Analyze structure and styling
+4. Generate:
+   - HTML
+   - CSS
+   - JavaScript
+5. Save files into the `output/` folder
+
+---
+
+# 📂 Output Structure
+
+```bash
+output/
+├── index.html
+├── style.css
+└── script.js
+```
+
+Open `index.html` in your browser to view the generated website.
+
+---
+
+# 🧠 How the Agent Works
+
+The CLI agent follows a multi-step workflow:
+
+## 1. Website Scraping
+
+Using Axios + Cheerio:
+- headings
+- paragraphs
+- image URLs
+- stylesheet references
+
+are extracted from the target website.
+
+---
+
+## 2. AI Reasoning
+
+Gemini analyzes:
+- layout
+- colors
+- typography
+- spacing
+- structure
+- branding
+
+before generating the files.
+
+---
+
+## 3. File Generation
+
+The AI generates:
+- semantic HTML
+- responsive CSS
+- minimal JavaScript
+
+which are written directly to disk.
+
+---
+
+# 🎯 Assignment Requirements Covered
+
+✅ Conversational CLI Tool  
+✅ Multi-step Agent Workflow  
+✅ Real Website Cloning  
+✅ HTML/CSS/JS Generation  
+✅ Browser-ready Output  
+✅ Header + Hero + Footer  
+✅ Real File Creation  
+✅ Iterative Agent Reasoning  
+
+---
+
+# 📸 Demo Suggestions
+
+For your demo video:
+
+1. Run:
+```bash
+node index.js
+```
+
+2. Enter:
+```bash
+Clone https://www.scaler.com
+```
+
+3. Show:
+- terminal reasoning
+- generated files
+- browser output
+
+4. Open:
+```bash
+output/index.html
+```
+
+in browser.
+
+---
+
+# ⚠️ Notes
+
+- The generated website is AI-generated and may not be pixel-perfect.
+- Animations were intentionally minimized.
+- The agent focuses on visual similarity and structure.
+
+---
+
+# 📄 License
+
+MIT License
+
+---
+
+# 👨‍💻 Author
+
+Built for the GenAI Assignment.
