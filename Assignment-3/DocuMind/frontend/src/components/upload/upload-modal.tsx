@@ -55,7 +55,7 @@ export default function UploadModal({
       formData.append("file", file);
 
       const response = await fetch(
-        "http://localhost:5000/api/upload",
+        "https://genai-assignment-dotk.onrender.com/api/upload",
         {
           method: "POST",
           body: formData,

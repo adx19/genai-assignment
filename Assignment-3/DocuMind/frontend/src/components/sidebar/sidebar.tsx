@@ -41,7 +41,7 @@ export default function Sidebar({
   const fetchDocuments = async () => {
     try {
       const res = await fetch(
-        "http://localhost:5000/api/documents"
+        "https://genai-assignment-dotk.onrender.com/api/documents"
       );
 
       if (!res.ok) {

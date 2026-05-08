@@ -41,7 +41,7 @@ export default function ChatArea() {
 
     try {
       const res = await fetch(
-        "http://localhost:5000/api/chat",
+        "https://genai-assignment-dotk.onrender.com/api/chat",
         {
           method: "POST",
           headers: {
