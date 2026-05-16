@@ -20,7 +20,7 @@ const app = express();
 app.use(cors());
 
 app.use(express.json());
-
+console.log("NEW SERVER VERSION RUNNING");
 app.use("/api/upload", uploadRoutes);
 
 app.use("/api/chat", chatRoutes);

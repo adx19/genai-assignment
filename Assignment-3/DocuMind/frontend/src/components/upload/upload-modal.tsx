@@ -66,6 +66,8 @@ export default function UploadModal({
         throw new Error("Upload failed");
       }
 
+      window.dispatchEvent(new Event("documentsUpdated"));
+
       const data = await response.json();
       console.log(data);
 

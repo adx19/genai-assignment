@@ -63,37 +63,49 @@ const uploadDocument = async (
           file.buffer.toString("utf-8");
       }
 
-      const chunks = chunkText(
-        extractedText
-      );
+      	const id = Date.now().toString();
 
-      for (const chunk of chunks) {
-        const embedding =
-          await generateEmbedding(chunk);
+	documentStore.forEach(
+		doc => doc.active = false
+	);
 
-        vectorStore.push({
-          text: chunk,
-          embedding,
-        });
-      }
+	
+	const chunks = chunkText(
+	        extractedText
+      	);
+
+      	for (const chunk of chunks) {
+        	const embedding = await generateEmbedding(chunk);
+
+        	vectorStore.push({
+          		text: chunk,
+          		embedding,
+			documentId: id
+        	});
+      	}
 
       // Store document metadata
-      documentStore.push({
-        id: Date.now().toString(),
-        filename: file.originalname,
-        status: "Ready for chat",
-        uploadedAt: new Date(),
-      });
+      	documentStore.push({
+        	id,
+        	filename: file.originalname,
+        	status: "Ready for chat",
+        	uploadedAt: new Date(),
+		active: true
+      	});
+	
+	console.log("Document store:", documentStore);
+	
+	console.log("Vector store size:", vectorStore.length);
 
-      console.log(chunks[0]);
+      	console.log(chunks[0]);
 
-      return res.status(200).json({
-        success: true,
-        fileName: file.originalname,
-        totalChunks: chunks.length,
-        vectorsStored:
-          vectorStore.length,
-      });
+      	return res.status(200).json({
+        	success: true,
+        	fileName: file.originalname,
+        	totalChunks: chunks.length,
+        	vectorsStored:
+          	vectorStore.length,
+      	});
     } catch (error) {
       console.error(error);
 
